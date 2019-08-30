@@ -333,7 +333,7 @@ contract TokenVesting is Ownable{
      * @dev Calculates the amount that has already vested but hasn't been released yet.
      * @param account address of user
      */
-    function _releasableAmount(address account) public view returns (uint256) {
+    function _releasableAmount(address account) internal view returns (uint256) {
         return _vestedAmount(account).sub(vestedUser[account].releasedToken);
     }
 
@@ -342,7 +342,7 @@ contract TokenVesting is Ownable{
      * @dev Calculates the amount that has already vested.
      * @param account address of the user
      */
-    function _vestedAmount(address account) public view returns (uint256) {
+    function _vestedAmount(address account) internal view returns (uint256) {
         VestedToken storage vested = vestedUser[account];
         uint256 totalToken = vested.totalToken;
         if(block.timestamp <  vested.start.add(vested.cliff)){
