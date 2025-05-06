@@ -2,7 +2,7 @@
 
 LCX is an upgradeable **ERC-20 compliant token** designed with additional features like **strict supply management**, **permission-based minting**, **blacklisting** for compliance, and emergency **pausing** of minting, transferring and burning of tokens.
 
-See [LCXTokenUpgradeable](/contracts/LCXTokenUpgradeable.sol)
+See [LCX token contract](/contracts/LCX.sol)
 
 ### Features Overview
 
@@ -32,7 +32,7 @@ See [LCXTokenUpgradeable](/contracts/LCXTokenUpgradeable.sol)
 
 -   The contract deployment architecture is based on the **Transparent Upgradeable Proxy** pattern with a ProxyAdmin contract. Details can be found in OpenZeppelin docs.
 -   The only difference here with **ProxyAdmin** is that it inherits **Ownable2Step** instead of Ownable as provided in the OpenZeppelin codebase.
--   A single `owner` account is used as the initial owner of both: the ERC-20 implementation contract (LCXTokenUpgradeable) as well as the ProxyAdmin.
+-   A single `owner` account is used as the initial owner of both: the ERC-20 implementation contract (LCX) as well as the ProxyAdmin.
 -   Deployment and upgrade demo can be found in `test/LCXToken.test.ts`: `describe("Deployment and upgrade")`
 
 ### Implementation Contract Logic
@@ -41,19 +41,21 @@ The implementation logic for the above proxy pattern is split across two Solidit
 
 ![Implementation Logic](assets/LCX_Token_Implementation_Logic.png)
 
-**LCXTokenAdminUpgradeable**  
-`contracts/LCXTokenAdminUpgradeable.sol`
+**LCXAdmin**
+
+`contracts/LCXAdmin.sol`
 
 -   Manages the admin related functionalities for the token
 -   Inherits `Ownable2StepUpgradeable`, `AccessControlEnumerableUpgradeable`, `PausableUpgradeable`
 -   Manages access control with these access roles: `OWNER_ROLE`, `MINTER_ROLE`, `PAUSER_ROLE`, `BLACKLISTER_ROLE`
 -   Manages blacklisted addresses
 
-**LCXTokenUpgradeable**  
-`contracts/LCXTokenUpgradeable.sol`
+**LCX**
+
+`contracts/LCX.sol`
 
 -   Manages the ERC-20 related functionalities of the token
--   Inherits `LCXTokenAdminUpgradeable`, `ERC20Upgradeable`
+-   Inherits `LCXAdmin`, `ERC20Upgradeable`
 -   Has additional functions for minting, burning, and increasing, decreasing allowance
 -   As per OpenZeppelin's latest ERC-20 implementation, providing an allowance of `type(uint256).max` (i.e. `2 ** 256 - 1`) grants _infinite allowance_ to the spender
 

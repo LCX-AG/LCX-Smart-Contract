@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.28;
 
-import "./LCXTokenAdminUpgradeable.sol";
+import "./LCXAdmin.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 
 /**
- * @title LCXTokenUpgradeable
- * @author LCX (Developed by Dharmveer Bharti)
+ * @title LCX
+ * @author Liechtenstein Cryptoassets Exchange (Developed by Dharmveer Bharti)
  * @notice Implementation contract for LCX Token
  *
  * Token details:
@@ -14,7 +14,7 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
  * - Symbol: LCX
  * - Decimals: 18
  */
-contract LCXTokenUpgradeable is LCXTokenAdminUpgradeable, ERC20Upgradeable {
+contract LCX is LCXAdmin, ERC20Upgradeable {
     // ----- Custom Errors -----
 
     error DecreaseAllowanceBelowZero(

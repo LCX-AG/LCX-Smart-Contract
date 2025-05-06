@@ -1,7 +1,7 @@
 import { expect } from "chai";
 import hre from "hardhat";
 import type { BaseContract } from "ethers";
-import { LCXTokenUpgradeable, LCXTokenUpgradeable__factory, ProxyAdmin, TransparentUpgradeableProxy, TransparentUpgradeableProxy__factory } from "../typechain-types";
+import { LCX, LCX__factory, ProxyAdmin, TransparentUpgradeableProxy, TransparentUpgradeableProxy__factory } from "../typechain-types";
 
 const { ethers } = hre;
 
@@ -11,13 +11,13 @@ describe("LCX Token", function () {
         const [owner] = await ethers.getSigners();
 
         // Deploy the implementation contract
-        const LCXTokenUpgradeableFactory = await ethers.getContractFactory("LCXTokenUpgradeable");
-        const implementation = await expect(LCXTokenUpgradeableFactory.deploy()).to.be.fulfilled;
+        const LcxFactory = await ethers.getContractFactory("LCX");
+        const implementation = await expect(LcxFactory.deploy()).to.be.fulfilled;
         await implementation.waitForDeployment();
 
         // Deploy the proxy
         const ProxyFactory = await ethers.getContractFactory("TransparentUpgradeableProxy");
-        const initData = LCXTokenUpgradeableFactory.interface.encodeFunctionData("initialize", [owner.address]);
+        const initData = LcxFactory.interface.encodeFunctionData("initialize", [owner.address]);
         const proxy = await expect(ProxyFactory.deploy(
             implementation,  // _logic
             owner,          // initialOwner for ProxyAdmin contract
@@ -25,11 +25,11 @@ describe("LCX Token", function () {
         )).to.be.fulfilled;
         await proxy.waitForDeployment();
 
-        const contract = LCXTokenUpgradeableFactory.attach(proxy) as LCXTokenUpgradeable;
+        const contract = LcxFactory.attach(proxy) as LCX;
 
         return {
             owner,
-            implementation: implementation as LCXTokenUpgradeable,
+            implementation: implementation as LCX,
             proxy: proxy as TransparentUpgradeableProxy,
             contract,
         };
@@ -70,7 +70,7 @@ describe("LCX Token", function () {
             await expect(
                 implementation.initialize(owner)
             ).to.be.revertedWithCustomError(
-                { interface: LCXTokenUpgradeable__factory.createInterface() },
+                { interface: LCX__factory.createInterface() },
                 "InvalidInitialization"
             );
         });
@@ -78,8 +78,8 @@ describe("LCX Token", function () {
         it("Should upgrade as per the transparent proxy pattern", async function () {
             const { owner, implementation, proxy } = await deploy();
 
-            const LCXTokenUpgradeableFactory = await ethers.getContractFactory("LCXTokenUpgradeable");
-            const newImplementation = await LCXTokenUpgradeableFactory.deploy();
+            const LcxFactory = await ethers.getContractFactory("LCX");
+            const newImplementation = await LcxFactory.deploy();
             await newImplementation.waitForDeployment();
 
             const proxyAdmin = await getProxyAdmin(proxy);
@@ -89,16 +89,16 @@ describe("LCX Token", function () {
         it("Should not allow zero address as the initial owner", async function () {
             const [owner] = await ethers.getSigners();
 
-            const LCXTokenUpgradeableFactory = await ethers.getContractFactory("LCXTokenUpgradeable");
-            const implementation = await LCXTokenUpgradeableFactory.deploy();
+            const LcxFactory = await ethers.getContractFactory("LCX");
+            const implementation = await LcxFactory.deploy();
             await implementation.waitForDeployment();
 
             const ProxyFactory = await ethers.getContractFactory("TransparentUpgradeableProxy");
-            const initData = LCXTokenUpgradeableFactory.interface.encodeFunctionData("initialize", [ethers.ZeroAddress]);
+            const initData = LcxFactory.interface.encodeFunctionData("initialize", [ethers.ZeroAddress]);
             await expect(
                 ProxyFactory.deploy(implementation, owner, initData)
             ).to.be.revertedWithCustomError(
-                { interface: LCXTokenUpgradeableFactory.interface },
+                { interface: LcxFactory.interface },
                 "OwnableInvalidOwner"
             ).withArgs(ethers.ZeroAddress);
         });

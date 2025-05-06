@@ -7,12 +7,12 @@ import "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/extensions/AccessControlEnumerableUpgradeable.sol";
 
 /**
- * @title LCXTokenAdminUpgradeable
- * @author LCX (Developed by Dharmveer Bharti)
+ * @title LCXAdmin
+ * @author Liechtenstein Cryptoassets Exchange (Developed by Dharmveer Bharti)
  * @notice Handles admin management and related functionalities
  *  for the token.
  */
-abstract contract LCXTokenAdminUpgradeable is
+abstract contract LCXAdmin is
     Ownable2StepUpgradeable,
     AccessControlEnumerableUpgradeable,
     PausableUpgradeable

@@ -2,7 +2,7 @@
 
 LCX is an upgradeable **ERC-20 compliant token** designed with additional features like **strict supply management**, **permission-based minting**, **blacklisting** for compliance, and emergency **pausing** of minting, transferring and burning of tokens.
 
-See [LCXTokenUpgradeable](contracts/LCXTokenUpgradeable.sol)
+See [LCX token contract](contracts/LCX.sol)
 
 ### Features
 
