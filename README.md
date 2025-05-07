@@ -24,6 +24,21 @@ See [LCX token contract](contracts/LCX.sol)
 -   **Upgradeable**:
     -   Implements **transparent upgradeable proxy** pattern.
 
+### Setup
+
+1.  Install packages
+    ```sh
+    npm install --save-exact
+    ```
+2.  Compile contracts
+    ```sh
+    npx hardhat compile
+    ```
+3.  Test contracts
+    ```sh
+    npx hardhat test
+    ```
+
 ### Technical Details
 
 See [Documentation](docs/DOCUMENTATION.md)
