@@ -22,7 +22,7 @@ abstract contract LCXAdmin is
     // ----- Constants -----
 
     bytes32 public constant OWNER_ROLE = keccak256("OWNER_ROLE");
-    bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
+    bytes32 public constant ISSUER_ROLE = keccak256("ISSUER_ROLE");
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
     bytes32 public constant BLACKLISTER_ROLE = keccak256("BLACKLISTER_ROLE");
 
@@ -49,12 +49,12 @@ abstract contract LCXAdmin is
     function __LCXTokenAdmin_init(address owner) internal onlyInitializing {
         __Ownable_init(owner);
 
-        _setRoleAdmin(MINTER_ROLE, OWNER_ROLE);
+        _setRoleAdmin(ISSUER_ROLE, OWNER_ROLE);
         _setRoleAdmin(PAUSER_ROLE, OWNER_ROLE);
         _setRoleAdmin(BLACKLISTER_ROLE, OWNER_ROLE);
 
         _grantRole(OWNER_ROLE, owner);
-        _grantRole(MINTER_ROLE, owner);
+        _grantRole(ISSUER_ROLE, owner);
         _grantRole(PAUSER_ROLE, owner);
         _grantRole(BLACKLISTER_ROLE, owner);
     }
@@ -75,11 +75,11 @@ abstract contract LCXAdmin is
         super.acceptOwnership();
         address newOwner = owner();
         _revokeRole(OWNER_ROLE, oldOwner);
-        _revokeRole(MINTER_ROLE, oldOwner);
+        _revokeRole(ISSUER_ROLE, oldOwner);
         _revokeRole(PAUSER_ROLE, oldOwner);
         _revokeRole(BLACKLISTER_ROLE, oldOwner);
         _grantRole(OWNER_ROLE, newOwner);
-        _grantRole(MINTER_ROLE, newOwner);
+        _grantRole(ISSUER_ROLE, newOwner);
         _grantRole(PAUSER_ROLE, newOwner);
         _grantRole(BLACKLISTER_ROLE, newOwner);
     }
@@ -106,7 +106,7 @@ abstract contract LCXAdmin is
 
     /**
      * @dev Adds an account to the blacklist.
-     * Also revokes Minter role, Pauser role and Blacklister role from that account.
+     * Also revokes Issuer role, Pauser role and Blacklister role from that account.
      *
      * Requirements:
      * - Caller must have the Blacklister role
@@ -119,8 +119,8 @@ abstract contract LCXAdmin is
     function addToBlacklist(
         address account
     ) external onlyRole(BLACKLISTER_ROLE) returns (bool added) {
-        if (hasRole(MINTER_ROLE, account)) {
-            _revokeRole(MINTER_ROLE, account);
+        if (hasRole(ISSUER_ROLE, account)) {
+            _revokeRole(ISSUER_ROLE, account);
         }
         if (hasRole(PAUSER_ROLE, account)) {
             _revokeRole(PAUSER_ROLE, account);

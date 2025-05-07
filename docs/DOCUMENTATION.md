@@ -1,26 +1,26 @@
 # LCX Token Smart Contract - Technical Documentation
 
-LCX is an upgradeable **ERC-20 compliant token** designed with additional features like **strict supply management**, **permission-based minting**, **blacklisting** for compliance, and emergency **pausing** of minting, transferring and burning of tokens.
+LCX is an upgradeable **ERC-20 compliant token** designed with additional features like **strict supply management**, **permission-based token issuing**, **blacklisting** for compliance, and emergency **pausing** of issuing, transferring and burning of tokens.
 
-See [LCX token contract](/contracts/LCX.sol)
+See [LCX token contract](contracts/LCX.sol)
 
-### Features Overview
+### Features
 
 -   **ERC-20 Standard**:
     -   Implements all required ERC-20 functions, ensuring compatibility with wallets and dApps.
 -   **Access Control**:
-    -   The owner can assign multiple accounts with `MINTER_ROLE`, `PAUSER_ROLE`, `BLACKLISTER_ROLE`
+    -   The owner can assign multiple accounts with `ISSUER_ROLE`, `PAUSER_ROLE`, `BLACKLISTER_ROLE`
     -   Owner can be changed via. a safer 2-step process, where the nominated owner account has to accept ownership.
     -   The primary owner account would be a multi-sig wallet, for robust security.
--   **Permissioned Minting**:
-    -   Accounts with `MINTER_ROLE` can mint tokens.
+-   **Permissioned Token Issuing**:
+    -   Accounts with `ISSUER_ROLE` can issue tokens.
     -   Can easily be integrated with bridging contracts for cross-chain transfers.
 -   **Burnable**:
     -   Implements `burn()` and `burnFrom()` utilizing allowance mechanism.
 -   **Account blacklisting**:
     -   Accounts can be blacklisted, halting any token flow from / to / through them.
 -   **Emergency pause**:
-    -   Allows an account with `PAUSER_ROLE` to pause the contract, stopping all token flow (mint, transfer, burn)
+    -   Allows an account with `PAUSER_ROLE` to pause the contract, stopping all token flow (issue, transfer, burn)
 -   **Upgradeable**:
     -   Implements **transparent upgradeable proxy** pattern.
 
@@ -47,7 +47,7 @@ The implementation logic for the above proxy pattern is split across two Solidit
 
 -   Manages the admin related functionalities for the token
 -   Inherits `Ownable2StepUpgradeable`, `AccessControlEnumerableUpgradeable`, `PausableUpgradeable`
--   Manages access control with these access roles: `OWNER_ROLE`, `MINTER_ROLE`, `PAUSER_ROLE`, `BLACKLISTER_ROLE`
+-   Manages access control with these access roles: `OWNER_ROLE`, `ISSUER_ROLE`, `PAUSER_ROLE`, `BLACKLISTER_ROLE`
 -   Manages blacklisted addresses
 
 **LCX**
@@ -56,13 +56,13 @@ The implementation logic for the above proxy pattern is split across two Solidit
 
 -   Manages the ERC-20 related functionalities of the token
 -   Inherits `LCXAdmin`, `ERC20Upgradeable`
--   Has additional functions for minting, burning, and increasing, decreasing allowance
+-   Has additional functions for issuing, burning, and increasing, decreasing allowance
 -   As per OpenZeppelin's latest ERC-20 implementation, providing an allowance of `type(uint256).max` (i.e. `2 ** 256 - 1`) grants _infinite allowance_ to the spender
 
 ### Access Control
 
 -   OpenZeppelin's role-based access control structure is used (AccessControlEnumerableUpgradeable)
--   There are four roles defined: `OWNER_ROLE`, `MINTER_ROLE`, `PAUSER_ROLE`, `BLACKLISTER_ROLE`
+-   There are four roles defined: `OWNER_ROLE`, `ISSUER_ROLE`, `PAUSER_ROLE`, `BLACKLISTER_ROLE`
 
 The role hierarchy is demonstrated in this diagram:
 
@@ -70,20 +70,20 @@ The role hierarchy is demonstrated in this diagram:
 
 -   Upon initialization, the `owner` is granted all roles, except `DEFAULT_ADMIN_ROLE`.
 
--   `DEFAULT_ADMIN_ROLE` is not included into the workflow. Only the contract owner should be able to manage the members of the three roles: `MINTER_ROLE`, `PAUSER_ROLE`, and `BLACKLISTER_ROLE`. A member of `DEFAULT_ADMIN_ROLE` can add more members to `DEFAULT_ADMIN_ROLE`. So a different role - `OWNER_ROLE` - is introduced.
+-   `DEFAULT_ADMIN_ROLE` is not included into the workflow. Only the contract owner should be able to manage the members of the three roles: `ISSUER_ROLE`, `PAUSER_ROLE`, and `BLACKLISTER_ROLE`. A member of `DEFAULT_ADMIN_ROLE` can add more members to `DEFAULT_ADMIN_ROLE`. So a different role - `OWNER_ROLE` - is introduced.
 
--   The contract owner is always assigned the `OWNER_ROLE`. When ownership changes, the new owner is granted the `OWNER_ROLE`, and the previous owner has it revoked. The owner cannot add more members to the `OWNER_ROLE`. This ensures that only one account has control over the members of `MINTER_ROLE`, `PAUSER_ROLE`, and `BLACKLISTER_ROLE`.
+-   The contract owner is always assigned the `OWNER_ROLE`. When ownership changes, the new owner is granted the `OWNER_ROLE`, and the previous owner has it revoked. The owner cannot add more members to the `OWNER_ROLE`. This ensures that only one account has control over the members of `ISSUER_ROLE`, `PAUSER_ROLE`, and `BLACKLISTER_ROLE`.
 
--   To add or remove an account as, e.g. a minter, `grantRole()` and `revokeRole()` functions can be used, respectively, like this:
+-   To add or remove an account as, e.g. an issuer, `grantRole()` and `revokeRole()` functions can be used, respectively, like this:
 
     ```ts
     // ethers.js
-    contract.connect(owner).grantRole(MINTER_ROLE, account);
-    contract.connect(owner).revokeRole(MINTER_ROLE, account);
+    contract.connect(owner).grantRole(ISSUER_ROLE, account);
+    contract.connect(owner).revokeRole(ISSUER_ROLE, account);
 
     // web3.js
-    contract.methods.grantRole(MINTER_ROLE, account).send({ from: owner });
-    contract.methods.revokeRole(MINTER_ROLE, account).send({ from: owner });
+    contract.methods.grantRole(ISSUER_ROLE, account).send({ from: owner });
+    contract.methods.revokeRole(ISSUER_ROLE, account).send({ from: owner });
     ```
 
     It would work similarly for `PAUSER_ROLE` and `BLACKLISTER_ROLE`.
@@ -93,14 +93,14 @@ The role hierarchy is demonstrated in this diagram:
 **Pausing the contract**
 
 -   An account having `PAUSER_ROLE` can pause the contract; initially the contract owner only.
--   Pausing the contract pauses all mints, transfers as well as burn.
+-   Pausing the contract pauses all issuing, transferring as well as burning.
 
 **Blacklisting an account**
 
 -   An account having `BLACKLISTER_ROLE` can blacklist (and un-blacklist) any account, by calling `addToBlacklist(account)` (and `removeFromBlacklist(account)`).
--   Blacklisting an account also revokes `MINTER_ROLE`, `PAUSER_ROLE`, and `BLACKLISTER_ROLE` from it (although it is very unlikely that an account with some assigned role would be blacklisted).
+-   Blacklisting an account also revokes `ISSUER_ROLE`, `PAUSER_ROLE`, and `BLACKLISTER_ROLE` from it (although it is very unlikely that an account with some assigned role would be blacklisted).
 -   When an account is blacklisted:
-    -   tokens cannot be minted to that account.
+    -   tokens cannot be issued to that account.
     -   tokens cannot be transferred from / to that account.
     -   tokens cannot be burned from that account.
-    -   it cannot transfer / mint / burn tokens to or from any other account. That means, for example, if a contract address is granted some token allowance, normally the contract can execute `transferFrom()`, but if that contract address gets blacklisted, it would not be able to execute `transferFrom()`, or `burnFrom()`.
+    -   it cannot transfer / issue / burn tokens to or from any other account. That means, for example, if a contract address is granted some token allowance, normally the contract can execute `transferFrom()`, but if that contract address gets blacklisted, it would not be able to execute `transferFrom()`, or `burnFrom()`.

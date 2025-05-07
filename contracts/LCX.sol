@@ -43,19 +43,19 @@ contract LCX is LCXAdmin, ERC20Upgradeable {
     }
 
     /**
-     * @dev Mints `value` amount of tokens and assigns them to `account`
+     * @dev Issues `value` amount of tokens and assigns them to `account`
      *
      * Requirements:
-     * - Caller must have the Minter role
+     * - Caller must have the Issuer role
      * - The contract must not be paused (enforced in `_update()`)
      *
      * @param account receiving address
-     * @param value amount of tokens to mint (in smallest units)
+     * @param value amount of tokens to issue (in smallest units)
      */
-    function mint(
+    function issueTokens(
         address account,
         uint256 value
-    ) external onlyRole(MINTER_ROLE) {
+    ) external onlyRole(ISSUER_ROLE) {
         _mint(account, value);
     }
 
@@ -132,9 +132,9 @@ contract LCX is LCXAdmin, ERC20Upgradeable {
      *
      * Added requirements:
      * - The contract must not be paused. That means, a paused state halts
-     *    all mints, transfers and burns.
+     *    all issuing, transferring and burning.
      * - `to` must not be the contract itself. That means tokens can't be
-     *    transferred or minted to the (proxy) contract address.
+     *    transferred or issued to the (proxy) contract address.
      * - `from`, `to` and the caller must not be blacklisted.
      */
     function _update(

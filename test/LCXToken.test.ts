@@ -48,7 +48,7 @@ describe("LCX Token", function () {
         return {
             DEFAULT_ADMIN_ROLE: ethers.zeroPadValue("0x", 32),
             OWNER_ROLE: ethers.id("OWNER_ROLE"),
-            MINTER_ROLE: ethers.id("MINTER_ROLE"),
+            ISSUER_ROLE: ethers.id("ISSUER_ROLE"),
             PAUSER_ROLE: ethers.id("PAUSER_ROLE"),
             BLACKLISTER_ROLE: ethers.id("BLACKLISTER_ROLE"),
         };
@@ -109,10 +109,10 @@ describe("LCX Token", function () {
         it("Should have the correct role admins", async function () {
             const { contract } = await deploy();
 
-            const { DEFAULT_ADMIN_ROLE, OWNER_ROLE, MINTER_ROLE, PAUSER_ROLE, BLACKLISTER_ROLE } = getRoles();
+            const { DEFAULT_ADMIN_ROLE, OWNER_ROLE, ISSUER_ROLE, PAUSER_ROLE, BLACKLISTER_ROLE } = getRoles();
 
             expect(await contract.getRoleAdmin(OWNER_ROLE)).to.equal(DEFAULT_ADMIN_ROLE);
-            expect(await contract.getRoleAdmin(MINTER_ROLE)).to.equal(OWNER_ROLE);
+            expect(await contract.getRoleAdmin(ISSUER_ROLE)).to.equal(OWNER_ROLE);
             expect(await contract.getRoleAdmin(PAUSER_ROLE)).to.equal(OWNER_ROLE);
             expect(await contract.getRoleAdmin(BLACKLISTER_ROLE)).to.equal(OWNER_ROLE);
         });
@@ -120,15 +120,15 @@ describe("LCX Token", function () {
         it("Should have the owner assigned to all roles except the default admin role", async function () {
             const { contract, owner } = await deploy();
 
-            const { DEFAULT_ADMIN_ROLE, OWNER_ROLE, MINTER_ROLE, PAUSER_ROLE, BLACKLISTER_ROLE } = getRoles();
+            const { DEFAULT_ADMIN_ROLE, OWNER_ROLE, ISSUER_ROLE, PAUSER_ROLE, BLACKLISTER_ROLE } = getRoles();
 
             expect(await contract.getRoleMemberCount(DEFAULT_ADMIN_ROLE)).to.equal(0);
 
             expect(await contract.getRoleMemberCount(OWNER_ROLE)).to.equal(1);
             expect(await contract.getRoleMember(OWNER_ROLE, 0)).to.equal(owner);
 
-            expect(await contract.getRoleMemberCount(MINTER_ROLE)).to.equal(1);
-            expect(await contract.getRoleMember(MINTER_ROLE, 0)).to.equal(owner);
+            expect(await contract.getRoleMemberCount(ISSUER_ROLE)).to.equal(1);
+            expect(await contract.getRoleMember(ISSUER_ROLE, 0)).to.equal(owner);
 
             expect(await contract.getRoleMemberCount(PAUSER_ROLE)).to.equal(1);
             expect(await contract.getRoleMember(PAUSER_ROLE, 0)).to.equal(owner);
@@ -143,12 +143,12 @@ describe("LCX Token", function () {
             const account = (await ethers.getSigners())[1];
             expect(account).to.not.equal(owner, "Selected account and the owner are same");
 
-            const { MINTER_ROLE, PAUSER_ROLE, BLACKLISTER_ROLE } = getRoles();
+            const { ISSUER_ROLE, PAUSER_ROLE, BLACKLISTER_ROLE } = getRoles();
 
-            await expect(contract.grantRole(MINTER_ROLE, account)).to.be.fulfilled;
-            expect(await contract.getRoleMemberCount(MINTER_ROLE)).to.equal(2);
-            await expect(contract.revokeRole(MINTER_ROLE, account)).to.be.fulfilled;
-            expect(await contract.getRoleMemberCount(MINTER_ROLE)).to.equal(1);
+            await expect(contract.grantRole(ISSUER_ROLE, account)).to.be.fulfilled;
+            expect(await contract.getRoleMemberCount(ISSUER_ROLE)).to.equal(2);
+            await expect(contract.revokeRole(ISSUER_ROLE, account)).to.be.fulfilled;
+            expect(await contract.getRoleMemberCount(ISSUER_ROLE)).to.equal(1);
 
             await expect(contract.grantRole(PAUSER_ROLE, account)).to.be.fulfilled;
             expect(await contract.getRoleMemberCount(PAUSER_ROLE)).to.equal(2);
@@ -167,7 +167,7 @@ describe("LCX Token", function () {
             const account = (await ethers.getSigners())[1];
             expect(account).to.not.equal(owner, "Selected account and the owner are same");
 
-            const { DEFAULT_ADMIN_ROLE, OWNER_ROLE, MINTER_ROLE, PAUSER_ROLE, BLACKLISTER_ROLE } = getRoles();
+            const { DEFAULT_ADMIN_ROLE, OWNER_ROLE, ISSUER_ROLE, PAUSER_ROLE, BLACKLISTER_ROLE } = getRoles();
 
             // Before
             expect(await contract.getRoleMemberCount(DEFAULT_ADMIN_ROLE)).to.equal(0);
@@ -175,8 +175,8 @@ describe("LCX Token", function () {
             expect(await contract.getRoleMemberCount(OWNER_ROLE)).to.equal(1);
             expect(await contract.getRoleMember(OWNER_ROLE, 0)).to.equal(owner);
 
-            expect(await contract.getRoleMemberCount(MINTER_ROLE)).to.equal(1);
-            expect(await contract.getRoleMember(MINTER_ROLE, 0)).to.equal(owner);
+            expect(await contract.getRoleMemberCount(ISSUER_ROLE)).to.equal(1);
+            expect(await contract.getRoleMember(ISSUER_ROLE, 0)).to.equal(owner);
 
             expect(await contract.getRoleMemberCount(PAUSER_ROLE)).to.equal(1);
             expect(await contract.getRoleMember(PAUSER_ROLE, 0)).to.equal(owner);
@@ -194,8 +194,8 @@ describe("LCX Token", function () {
             expect(await contract.getRoleMemberCount(OWNER_ROLE)).to.equal(1);
             expect(await contract.getRoleMember(OWNER_ROLE, 0)).to.equal(account);
 
-            expect(await contract.getRoleMemberCount(MINTER_ROLE)).to.equal(1);
-            expect(await contract.getRoleMember(MINTER_ROLE, 0)).to.equal(account);
+            expect(await contract.getRoleMemberCount(ISSUER_ROLE)).to.equal(1);
+            expect(await contract.getRoleMember(ISSUER_ROLE, 0)).to.equal(account);
 
             expect(await contract.getRoleMemberCount(PAUSER_ROLE)).to.equal(1);
             expect(await contract.getRoleMember(PAUSER_ROLE, 0)).to.equal(account);
@@ -240,13 +240,13 @@ describe("LCX Token", function () {
             expect(await contract.paused()).to.be.false;
         });
 
-        it("Should allow a minter role member to mint tokens", async function () {
+        it("Should allow an issuer role member to issue tokens", async function () {
             const { contract, owner } = await deploy();
 
-            const { MINTER_ROLE } = getRoles();
-            expect(await contract.hasRole(MINTER_ROLE, owner)).to.be.true;
+            const { ISSUER_ROLE } = getRoles();
+            expect(await contract.hasRole(ISSUER_ROLE, owner)).to.be.true;
 
-            await expect(contract.connect(owner).mint(owner, 1000n)).to.be.fulfilled;
+            await expect(contract.connect(owner).issueTokens(owner, 1000n)).to.be.fulfilled;
             expect(await contract.balanceOf(owner)).to.equal(1000n);
         });
 
@@ -264,10 +264,10 @@ describe("LCX Token", function () {
             expect(await contract.isBlacklisted(account)).to.be.false;
         });
 
-        it("Should not allow a non-privileged account to carry out pause, mint, blacklist related operations", async function () {
+        it("Should not allow a non-privileged account to carry out pause, issue, blacklist related operations", async function () {
             const { contract, owner } = await deploy();
 
-            const { PAUSER_ROLE, MINTER_ROLE, BLACKLISTER_ROLE } = getRoles();
+            const { PAUSER_ROLE, ISSUER_ROLE, BLACKLISTER_ROLE } = getRoles();
 
             const signers = await ethers.getSigners();
             const runner = signers[1];
@@ -295,16 +295,16 @@ describe("LCX Token", function () {
                 PAUSER_ROLE
             );
 
-            // Mint
-            expect(await contract.hasRole(MINTER_ROLE, runner)).to.be.false;
+            // Issue tokens
+            expect(await contract.hasRole(ISSUER_ROLE, runner)).to.be.false;
             await expect(
-                contract.connect(runner).mint(targetAccount, 1000n)
+                contract.connect(runner).issueTokens(targetAccount, 1000n)
             ).to.be.revertedWithCustomError(
                 { interface: contract.interface },
                 "AccessControlUnauthorizedAccount"
             ).withArgs(
                 runner,
-                MINTER_ROLE
+                ISSUER_ROLE
             );
 
             // Blacklist, Un-blacklist
@@ -329,23 +329,23 @@ describe("LCX Token", function () {
             );
         });
 
-        it("Should revoke minter, pauser, blacklister roles when an account is blacklisted", async function () {
+        it("Should revoke issuer, pauser, blacklister roles when an account is blacklisted", async function () {
             const { contract, owner } = await deploy();
 
-            const { MINTER_ROLE, PAUSER_ROLE, BLACKLISTER_ROLE } = getRoles();
+            const { ISSUER_ROLE, PAUSER_ROLE, BLACKLISTER_ROLE } = getRoles();
 
             const account = (await ethers.getSigners())[1];
             expect(account).to.not.equal(owner, "Selected account and the owner are same");
 
-            await contract.grantRole(MINTER_ROLE, account);
+            await contract.grantRole(ISSUER_ROLE, account);
             await contract.grantRole(PAUSER_ROLE, account);
             await contract.grantRole(BLACKLISTER_ROLE, account);
-            expect(await contract.hasRole(MINTER_ROLE, account)).to.be.true;
+            expect(await contract.hasRole(ISSUER_ROLE, account)).to.be.true;
             expect(await contract.hasRole(PAUSER_ROLE, account)).to.be.true;
             expect(await contract.hasRole(BLACKLISTER_ROLE, account)).to.be.true;
 
             await contract.addToBlacklist(account);
-            expect(await contract.hasRole(MINTER_ROLE, account)).to.be.false;
+            expect(await contract.hasRole(ISSUER_ROLE, account)).to.be.false;
             expect(await contract.hasRole(PAUSER_ROLE, account)).to.be.false;
             expect(await contract.hasRole(BLACKLISTER_ROLE, account)).to.be.false;
         });
@@ -404,14 +404,14 @@ describe("LCX Token", function () {
 
     describe("Tokens flow", function () {
 
-        it("Should not allow mint, transfer, and burn when paused", async function () {
+        it("Should not allow issuing, transfer, and burn when paused", async function () {
             const { contract, owner } = await deploy();
 
             const account = (await ethers.getSigners())[1];
             expect(account).to.not.equal(owner);
 
             // Before
-            await expect(contract.mint(owner, 1000n)).to.be.fulfilled;
+            await expect(contract.issueTokens(owner, 1000n)).to.be.fulfilled;
             await contract.approve(account, 1000n);
             await expect(contract.transfer(account, 10n)).to.be.fulfilled;
             await expect(contract.connect(account).transferFrom(owner, account, 10n)).to.be.fulfilled;
@@ -422,7 +422,7 @@ describe("LCX Token", function () {
             await contract.pause();
 
             // After
-            await expect(contract.mint(owner, 10n)).to.be.revertedWithCustomError(
+            await expect(contract.issueTokens(owner, 10n)).to.be.revertedWithCustomError(
                 { interface: contract.interface },
                 "EnforcedPause"
             );
@@ -447,12 +447,12 @@ describe("LCX Token", function () {
             );
         });
 
-        it("Should not allow mint or transfer of tokens to the token contract", async function () {
+        it("Should not allow issuing or transfer of tokens to the token contract", async function () {
             const { contract, owner } = await deploy();
 
-            // Mint to contract address
+            // Issue tokens to contract address
             await expect(
-                contract.mint(contract, 1000n)
+                contract.issueTokens(contract, 1000n)
             ).to.be.revertedWithCustomError(
                 { interface: contract.interface },
                 "ERC20InvalidReceiver"
@@ -461,7 +461,7 @@ describe("LCX Token", function () {
             );
 
             // Transfer to contract address
-            await expect(contract.mint(owner, 1000n)).to.be.fulfilled;
+            await expect(contract.issueTokens(owner, 1000n)).to.be.fulfilled;
             await expect(
                 contract.connect(owner).transfer(contract, 10n)
             ).to.be.revertedWithCustomError(
@@ -472,13 +472,13 @@ describe("LCX Token", function () {
             );
         });
 
-        it("Should not allow mint or transfer or burn from / to a blacklisted account", async function () {
+        it("Should not allow issuing or transfer or burn from / to a blacklisted account", async function () {
             const { contract, owner } = await deploy();
 
             const account = (await ethers.getSigners())[1];
             expect(account).to.not.equal(owner);
 
-            await contract.mint(owner, 1000n);
+            await contract.issueTokens(owner, 1000n);
             await contract.transfer(account, 100n);
             expect(await contract.balanceOf(owner)).to.equal(900n);
             expect(await contract.balanceOf(account)).to.equal(100n);
@@ -487,9 +487,9 @@ describe("LCX Token", function () {
             await contract.connect(owner).addToBlacklist(account);
             expect(await contract.isBlacklisted(account)).to.be.true;
 
-            // Mint
+            // Issue tokens
             await expect(
-                contract.connect(owner).mint(account, 10n)
+                contract.connect(owner).issueTokens(account, 10n)
             ).to.be.revertedWithCustomError(
                 { interface: contract.interface },
                 "AccountBlacklisted"
@@ -537,7 +537,7 @@ describe("LCX Token", function () {
             expect(account).to.not.equal(owner);
             expect(toAccount).to.not.equal(owner);
 
-            await contract.connect(owner).mint(owner, 1000n);
+            await contract.connect(owner).issueTokens(owner, 1000n);
             await contract.connect(owner).approve(account, 500n);
             await contract.connect(owner).addToBlacklist(account);
 
@@ -571,7 +571,7 @@ describe("LCX Token", function () {
             expect(account).to.not.equal(owner);
             expect(toAccount).to.not.equal(owner);
 
-            await contract.connect(owner).mint(account, 1000n);
+            await contract.connect(owner).issueTokens(account, 1000n);
             await contract.connect(owner).addToBlacklist(account);
 
             await expect(contract.connect(account).approve(account, 1000n)).to.be.fulfilled;
