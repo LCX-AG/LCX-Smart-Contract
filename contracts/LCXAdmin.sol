@@ -19,16 +19,20 @@ abstract contract LCXAdmin is
 {
     using EnumerableSet for EnumerableSet.AddressSet;
 
-    // ----- Constants -----
-
     bytes32 public constant OWNER_ROLE = keccak256("OWNER_ROLE");
     bytes32 public constant ISSUER_ROLE = keccak256("ISSUER_ROLE");
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
     bytes32 public constant BLACKLISTER_ROLE = keccak256("BLACKLISTER_ROLE");
 
-    // ----- Storage Variables -----
+    // ----- Storage -----
 
-    EnumerableSet.AddressSet internal _blacklistedAddresses;
+    /// @custom:storage-location erc7201:lcx.storage.LCXAdmin
+    struct LCXAdminStorage {
+        EnumerableSet.AddressSet _blacklistedAddresses;
+    }
+
+    // keccak256(abi.encode(uint256(keccak256(bytes("lcx.storage.LCXAdmin"))) - 1)) & ~bytes32(uint256(0xff))
+    bytes32 private constant LCXAdminStorageLocation = 0xdbdc0e54e7070d56ba0e176e8307ba151e21ef4954967e239c4403d9b7f6ff00;
 
     // ----- Custom Errors -----
 
@@ -41,6 +45,12 @@ abstract contract LCXAdmin is
     event RemovedFromBlacklist(address indexed account, address caller);
 
     // ----- Functions -----
+
+    function _getLCXAdminStorage() private pure returns (LCXAdminStorage storage $) {
+        assembly {
+            $.slot := LCXAdminStorageLocation
+        }
+    }
 
     /**
      * @dev Initializes the contract. Sets role admins, grants `owner` all roles.
@@ -119,6 +129,7 @@ abstract contract LCXAdmin is
     function addToBlacklist(
         address account
     ) external onlyRole(BLACKLISTER_ROLE) returns (bool added) {
+        LCXAdminStorage storage $ = _getLCXAdminStorage();
         if (hasRole(ISSUER_ROLE, account)) {
             _revokeRole(ISSUER_ROLE, account);
         }
@@ -128,7 +139,7 @@ abstract contract LCXAdmin is
         if (hasRole(BLACKLISTER_ROLE, account)) {
             _revokeRole(BLACKLISTER_ROLE, account);
         }
-        added = _blacklistedAddresses.add(account);
+        added = $._blacklistedAddresses.add(account);
         if (added) {
             emit AddedToBlacklist(account, _msgSender());
         }
@@ -148,18 +159,21 @@ abstract contract LCXAdmin is
     function removeFromBlacklist(
         address account
     ) external onlyRole(BLACKLISTER_ROLE) returns (bool removed) {
-        removed = _blacklistedAddresses.remove(account);
+        LCXAdminStorage storage $ = _getLCXAdminStorage();
+        removed = $._blacklistedAddresses.remove(account);
         if (removed) {
             emit RemovedFromBlacklist(account, _msgSender());
         }
     }
 
     function isBlacklisted(address account) public view returns (bool) {
-        return _blacklistedAddresses.contains(account);
+        LCXAdminStorage storage $ = _getLCXAdminStorage();
+        return $._blacklistedAddresses.contains(account);
     }
 
     function getBlacklistedAccountsCount() external view returns (uint256) {
-        return _blacklistedAddresses.length();
+        LCXAdminStorage storage $ = _getLCXAdminStorage();
+        return $._blacklistedAddresses.length();
     }
 
     function getAllBlacklistedAccounts()
@@ -167,13 +181,15 @@ abstract contract LCXAdmin is
         view
         returns (address[] memory)
     {
-        return _blacklistedAddresses.values();
+        LCXAdminStorage storage $ = _getLCXAdminStorage();
+        return $._blacklistedAddresses.values();
     }
 
     function getBlacklistedAccountAt(
         uint256 index
     ) external view returns (address) {
-        return _blacklistedAddresses.at(index);
+        LCXAdminStorage storage $ = _getLCXAdminStorage();
+        return $._blacklistedAddresses.at(index);
     }
 
     function _requireNotBlacklisted(address account) internal view {
