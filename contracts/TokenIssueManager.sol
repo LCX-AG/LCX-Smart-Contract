@@ -8,6 +8,11 @@ import "@openzeppelin/contracts-upgradeable/access/extensions/AccessControlEnume
 import "./Structs.sol";
 import {LCX} from "./LCX.sol";
 
+/**
+ * @title TokenIssueManager
+ * @author Liechtenstein Cryptoassets Exchange
+ * @notice Manages issuing of new LCX tokens with per year simple interest rate
+ */
 contract TokenIssueManager is
     Ownable2StepUpgradeable,
     AccessControlEnumerableUpgradeable,
@@ -56,6 +61,15 @@ contract TokenIssueManager is
         }
     }
 
+    /**
+     * @dev Initializes the contract.
+     * Sets the annual interest rate to 8%.
+     *
+     * @param owner_ the initial owner address
+     * @param lcxToken_ LCX token contract address
+     * @param stakeManager_ stake manager contract address
+     * @param treasury_ treasury address
+     */
     function initialize(
         address owner_,
         address lcxToken_,
@@ -86,6 +100,19 @@ contract TokenIssueManager is
         emit AnnualIssueRateUpdated(0, _annualIssueRate);
     }
 
+    /**
+     * @dev Issues LCX tokens for the first time.
+     *
+     * Total extra supply (for some predefined wallets) should not be greater
+     * than the annual issue interest rate (i.e. 8% of the specified initial supply).
+     *
+     * Requirements:
+     * - The contract must not be paused
+     * - Caller must have the Issuer role
+     *
+     * @param initialSupply_ initial token supply
+     * @param extraSupply_ extra token supply for a specified set of addresses
+     */
     function issueTokensInitial(
         uint256 initialSupply_,
         BulkTransfer[] memory extraSupply_
@@ -118,6 +145,20 @@ contract TokenIssueManager is
         $._lcxToken.bulkTransfer(extraSupply_);
     }
 
+    /**
+     * @dev Issues new LCX tokens periodically. Expected to be called annually,
+     * but not necessarily.
+     *
+     * Issuing new tokens follows the simple interest formula with
+     * principle amount = `_initialSupply`
+     * and yearly interest rate = `_annualIssueRate`
+     *
+     * Transfers the newly minted tokens to the treasury and the stake manager.
+     *
+     * Requirements:
+     * - The contract must not be paused
+     * - Caller must have the Issuer role
+     */
     function issueTokensPeriodic()
         external
         whenNotPaused
@@ -150,6 +191,16 @@ contract TokenIssueManager is
         $._lcxToken.bulkTransfer(transfers);
     }
 
+    /**
+     * @dev Transfers the tokens from this contract to multiple addresses.
+     *
+     * Requirements:
+     * - The contract must not be paused
+     * - Caller must have the Issuer role
+     *
+     * @param transfers list of token receivers and their corresponding
+     * token amounts
+     */
     function distributeTokens(
         BulkTransfer[] calldata transfers
     ) external whenNotPaused onlyRole(ISSUER_ROLE) {
@@ -157,6 +208,12 @@ contract TokenIssueManager is
         $._lcxToken.bulkTransfer(transfers);
     }
 
+    /**
+     * @dev Update stake manager address.
+     *
+     * Requirements:
+     * - Caller must be the contract owner
+     */
     function setStakeManager(address newAddress) external onlyOwner {
         TokenIssueManagerStorage storage $ = _getTokenIssueManagerStorage();
         address oldAddress = $._stakeManager;
@@ -164,6 +221,12 @@ contract TokenIssueManager is
         emit StakeManagerUpdated(oldAddress, newAddress);
     }
 
+    /**
+     * @dev Update treasury address.
+     *
+     * Requirements:
+     * - Caller must be the contract owner
+     */
     function setTreasury(address newAddress) external onlyOwner {
         TokenIssueManagerStorage storage $ = _getTokenIssueManagerStorage();
         address oldAddress = $._treasury;
@@ -171,6 +234,13 @@ contract TokenIssueManager is
         emit TreasuryUpdated(oldAddress, newAddress);
     }
 
+    /**
+     * @dev Update annual token issuing interest rate.
+     *
+     * Requirements:
+     * - Caller must be the contract owner
+     * - The new rate must not be greater than 20%
+     */
     function setAnnualIssueRate(uint256 newRate) external onlyOwner {
         // Should not be more than 20%
         if (newRate > 2000) revert InvalidAmount(newRate);
@@ -201,10 +271,22 @@ contract TokenIssueManager is
         _grantRole(ISSUER_ROLE, newOwner);
     }
 
+    /**
+     * @dev Pause the contract.
+     *
+     * Requirements:
+     * - Caller must be the contract owner
+     */
     function pause() external onlyOwner {
         _pause();
     }
 
+    /**
+     * @dev Un-pause the contract.
+     *
+     * Requirements:
+     * - Caller must be the contract owner
+     */
     function unpause() external onlyOwner {
         _unpause();
     }
