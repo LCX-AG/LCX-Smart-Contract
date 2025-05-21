@@ -64,7 +64,6 @@ abstract contract LCXAdmin is
         _setRoleAdmin(BLACKLISTER_ROLE, OWNER_ROLE);
 
         _grantRole(OWNER_ROLE, owner);
-        _grantRole(ISSUER_ROLE, owner);
         _grantRole(PAUSER_ROLE, owner);
         _grantRole(BLACKLISTER_ROLE, owner);
     }
@@ -85,11 +84,9 @@ abstract contract LCXAdmin is
         super.acceptOwnership();
         address newOwner = owner();
         _revokeRole(OWNER_ROLE, oldOwner);
-        _revokeRole(ISSUER_ROLE, oldOwner);
         _revokeRole(PAUSER_ROLE, oldOwner);
         _revokeRole(BLACKLISTER_ROLE, oldOwner);
         _grantRole(OWNER_ROLE, newOwner);
-        _grantRole(ISSUER_ROLE, newOwner);
         _grantRole(PAUSER_ROLE, newOwner);
         _grantRole(BLACKLISTER_ROLE, newOwner);
     }

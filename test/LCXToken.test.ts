@@ -117,7 +117,7 @@ describe("LCX Token", function () {
             expect(await contract.getRoleAdmin(BLACKLISTER_ROLE)).to.equal(OWNER_ROLE);
         });
 
-        it("Should have the owner assigned to all roles except the default admin role", async function () {
+        it("Should have different roles assigned to the owner", async function () {
             const { contract, owner } = await deploy();
 
             const { DEFAULT_ADMIN_ROLE, OWNER_ROLE, ISSUER_ROLE, PAUSER_ROLE, BLACKLISTER_ROLE } = getRoles();
@@ -127,8 +127,7 @@ describe("LCX Token", function () {
             expect(await contract.getRoleMemberCount(OWNER_ROLE)).to.equal(1);
             expect(await contract.getRoleMember(OWNER_ROLE, 0)).to.equal(owner);
 
-            expect(await contract.getRoleMemberCount(ISSUER_ROLE)).to.equal(1);
-            expect(await contract.getRoleMember(ISSUER_ROLE, 0)).to.equal(owner);
+            expect(await contract.getRoleMemberCount(ISSUER_ROLE)).to.equal(0);
 
             expect(await contract.getRoleMemberCount(PAUSER_ROLE)).to.equal(1);
             expect(await contract.getRoleMember(PAUSER_ROLE, 0)).to.equal(owner);
@@ -146,9 +145,9 @@ describe("LCX Token", function () {
             const { ISSUER_ROLE, PAUSER_ROLE, BLACKLISTER_ROLE } = getRoles();
 
             await expect(contract.grantRole(ISSUER_ROLE, account)).to.be.fulfilled;
-            expect(await contract.getRoleMemberCount(ISSUER_ROLE)).to.equal(2);
-            await expect(contract.revokeRole(ISSUER_ROLE, account)).to.be.fulfilled;
             expect(await contract.getRoleMemberCount(ISSUER_ROLE)).to.equal(1);
+            await expect(contract.revokeRole(ISSUER_ROLE, account)).to.be.fulfilled;
+            expect(await contract.getRoleMemberCount(ISSUER_ROLE)).to.equal(0);
 
             await expect(contract.grantRole(PAUSER_ROLE, account)).to.be.fulfilled;
             expect(await contract.getRoleMemberCount(PAUSER_ROLE)).to.equal(2);
@@ -175,8 +174,7 @@ describe("LCX Token", function () {
             expect(await contract.getRoleMemberCount(OWNER_ROLE)).to.equal(1);
             expect(await contract.getRoleMember(OWNER_ROLE, 0)).to.equal(owner);
 
-            expect(await contract.getRoleMemberCount(ISSUER_ROLE)).to.equal(1);
-            expect(await contract.getRoleMember(ISSUER_ROLE, 0)).to.equal(owner);
+            expect(await contract.getRoleMemberCount(ISSUER_ROLE)).to.equal(0);
 
             expect(await contract.getRoleMemberCount(PAUSER_ROLE)).to.equal(1);
             expect(await contract.getRoleMember(PAUSER_ROLE, 0)).to.equal(owner);
@@ -194,8 +192,7 @@ describe("LCX Token", function () {
             expect(await contract.getRoleMemberCount(OWNER_ROLE)).to.equal(1);
             expect(await contract.getRoleMember(OWNER_ROLE, 0)).to.equal(account);
 
-            expect(await contract.getRoleMemberCount(ISSUER_ROLE)).to.equal(1);
-            expect(await contract.getRoleMember(ISSUER_ROLE, 0)).to.equal(account);
+            expect(await contract.getRoleMemberCount(ISSUER_ROLE)).to.equal(0);
 
             expect(await contract.getRoleMemberCount(PAUSER_ROLE)).to.equal(1);
             expect(await contract.getRoleMember(PAUSER_ROLE, 0)).to.equal(account);
@@ -243,10 +240,14 @@ describe("LCX Token", function () {
         it("Should allow an issuer role member to issue tokens", async function () {
             const { contract, owner } = await deploy();
 
-            const { ISSUER_ROLE } = getRoles();
-            expect(await contract.hasRole(ISSUER_ROLE, owner)).to.be.true;
+            const account = (await ethers.getSigners())[1];
+            expect(account).to.not.equal(owner, "Selected account and the owner are same");
 
-            await expect(contract.connect(owner).issueTokens(owner, 1000n)).to.be.fulfilled;
+            const { ISSUER_ROLE } = getRoles();
+            await expect(contract.connect(owner).grantRole(ISSUER_ROLE, account)).to.be.fulfilled;
+            expect(await contract.hasRole(ISSUER_ROLE, account)).to.be.true;
+
+            await expect(contract.connect(account).issueTokens(owner, 1000n)).to.be.fulfilled;
             expect(await contract.balanceOf(owner)).to.equal(1000n);
         });
 
@@ -411,6 +412,8 @@ describe("LCX Token", function () {
             expect(account).to.not.equal(owner);
 
             // Before
+            const { ISSUER_ROLE } = getRoles();
+            await contract.grantRole(ISSUER_ROLE, owner);
             await expect(contract.issueTokens(owner, 1000n)).to.be.fulfilled;
             await contract.approve(account, 1000n);
             await expect(contract.transfer(account, 10n)).to.be.fulfilled;
@@ -450,6 +453,9 @@ describe("LCX Token", function () {
         it("Should not allow issuing or transfer of tokens to the token contract", async function () {
             const { contract, owner } = await deploy();
 
+            const { ISSUER_ROLE } = getRoles();
+            await contract.grantRole(ISSUER_ROLE, owner);
+
             // Issue tokens to contract address
             await expect(
                 contract.issueTokens(contract, 1000n)
@@ -478,6 +484,8 @@ describe("LCX Token", function () {
             const account = (await ethers.getSigners())[1];
             expect(account).to.not.equal(owner);
 
+            const { ISSUER_ROLE } = getRoles();
+            await contract.grantRole(ISSUER_ROLE, owner);
             await contract.issueTokens(owner, 1000n);
             await contract.transfer(account, 100n);
             expect(await contract.balanceOf(owner)).to.equal(900n);
@@ -537,6 +545,8 @@ describe("LCX Token", function () {
             expect(account).to.not.equal(owner);
             expect(toAccount).to.not.equal(owner);
 
+            const { ISSUER_ROLE } = getRoles();
+            await contract.grantRole(ISSUER_ROLE, owner);
             await contract.connect(owner).issueTokens(owner, 1000n);
             await contract.connect(owner).approve(account, 500n);
             await contract.connect(owner).addToBlacklist(account);
@@ -571,6 +581,8 @@ describe("LCX Token", function () {
             expect(account).to.not.equal(owner);
             expect(toAccount).to.not.equal(owner);
 
+            const { ISSUER_ROLE } = getRoles();
+            await contract.grantRole(ISSUER_ROLE, owner);
             await contract.connect(owner).issueTokens(account, 1000n);
             await contract.connect(owner).addToBlacklist(account);
 
