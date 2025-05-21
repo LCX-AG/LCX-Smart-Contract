@@ -2,11 +2,12 @@
 pragma solidity 0.8.28;
 
 import "./LCXAdmin.sol";
+import "./Structs.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 
 /**
  * @title LCX
- * @author Liechtenstein Cryptoassets Exchange (Developed by Dharmveer Bharti)
+ * @author Liechtenstein Cryptoassets Exchange
  * @notice Implementation contract for LCX Token
  *
  * Token details:
@@ -67,7 +68,7 @@ contract LCX is LCXAdmin, ERC20Upgradeable {
      *
      * @param value amount of tokens to burn (in smallest units)
      */
-    function burn(uint256 value) public virtual {
+    function burn(uint256 value) external {
         _burn(_msgSender(), value);
     }
 
@@ -77,13 +78,53 @@ contract LCX is LCXAdmin, ERC20Upgradeable {
      *
      * Requirements:
      * - The contract must not be paused
+     * - the caller must have allowance for `account`'s tokens of at least
+     * `value`.
      *
      * @param account the account to burn tokens from
      * @param value amount of tokens to burn (in smallest units)
      */
-    function burnFrom(address account, uint256 value) public virtual {
+    function burnFrom(address account, uint256 value) external {
         _spendAllowance(account, _msgSender(), value);
         _burn(account, value);
+    }
+
+    /**
+     * @dev Perform multiple transfers from caller to different accounts.
+     * Calls transfer(to, value) for every transfer.
+     */
+    function bulkTransfer(
+        BulkTransfer[] memory transfers
+    ) external returns (bool) {
+        uint256 len = transfers.length;
+        for (uint256 i = 0; i < len; ) {
+            transfer(transfers[i].to, transfers[i].value);
+            unchecked {
+                ++i;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * @dev Perform multiple transfers from different accounts to different accounts.
+     * Calls transferFrom(from, to, value) for every transfer.
+     */
+    function bulkTransferFrom(
+        BulkTransferFrom[] memory transfers
+    ) external returns (bool) {
+        uint256 len = transfers.length;
+        for (uint256 i = 0; i < len; ) {
+            transferFrom(
+                transfers[i].from,
+                transfers[i].to,
+                transfers[i].value
+            );
+            unchecked {
+                ++i;
+            }
+        }
+        return true;
     }
 
     /**
@@ -95,7 +136,7 @@ contract LCX is LCXAdmin, ERC20Upgradeable {
     function increaseAllowance(
         address spender,
         uint256 addedValue
-    ) public virtual returns (bool) {
+    ) external returns (bool) {
         address owner = _msgSender();
         _approve(owner, spender, allowance(owner, spender) + addedValue);
         return true;
@@ -112,7 +153,7 @@ contract LCX is LCXAdmin, ERC20Upgradeable {
     function decreaseAllowance(
         address spender,
         uint256 subtractedValue
-    ) public virtual returns (bool) {
+    ) external returns (bool) {
         address owner = _msgSender();
         uint256 currentAllowance = allowance(owner, spender);
         if (currentAllowance < subtractedValue) {

@@ -8,7 +8,7 @@ import "@openzeppelin/contracts-upgradeable/access/extensions/AccessControlEnume
 
 /**
  * @title LCXAdmin
- * @author Liechtenstein Cryptoassets Exchange (Developed by Dharmveer Bharti)
+ * @author Liechtenstein Cryptoassets Exchange
  * @notice Handles admin management and related functionalities
  *  for the token.
  */
